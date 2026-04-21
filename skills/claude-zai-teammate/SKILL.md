@@ -24,29 +24,14 @@ This is a lightweight replacement for the built-in teammate feature (TeamCreate 
    ```bash
    MY_PANE="$TMUX_PANE"
    WIN=zai-<taskslug>
-   tmux new-window -d -n "$WIN" -c "$PWD" 'claude-zai --dangerously-skip-permissions'
+   tmux new-window -d -n "$WIN" -c "$PWD" 'claude-zai'
    sleep 5   # claude-zai needs ~4-5s to boot and render UI
    TEAMMATE_PANE=$(tmux list-panes -t "$WIN" -F '#{pane_id}' | head -1)
    ```
 
-4. **Handle the bypass-permissions confirmation.** `--dangerously-skip-permissions` shows an interactive menu (`1. No, exit` / `2. Yes, I accept`) on first invocation in a new config. Capture the pane and check:
+4. **Capture gotcha.** `tmux capture-pane -p -S -30` (with history range) returns empty if no scrollback yet — use plain `tmux capture-pane -t <pane> -p` for the current visible buffer. Use `-S` when you need more context (agent stuck, unclear output, debugging).
 
-   ```bash
-   tmux capture-pane -t "$TEAMMATE_PANE" -p | tail -20
-   ```
-
-   If you see "Bypass Permissions mode" + the numbered menu, send literal `"2"` — that selects AND confirms in one keystroke (no Enter needed, no arrow-nav). Do NOT send `Down Enter` together; arrow+Enter in one batch raced and killed the window in testing.
-
-   ```bash
-   tmux send-keys -t "$TEAMMATE_PANE" "2"
-   sleep 1
-   ```
-
-   Then re-capture to verify the prompt (`❯`) is ready.
-
-5. **Capture gotcha.** `tmux capture-pane -p -S -30` (with history range) returns empty if no scrollback yet — use plain `tmux capture-pane -t <pane> -p` for the current visible buffer. Only use `-S` once there's real history.
-
-6. Send the initial briefing — it MUST include (a) the task, (b) my pane id so it can message me, (c) the explicit messaging protocol. Use `tmux send-keys -l` (literal) for the body, then a separate `Enter`:
+5. Send the initial briefing — it MUST include (a) the task, (b) my pane id so it can message me, (c) the explicit messaging protocol. Use `tmux send-keys -l` (literal) for the body, then a separate `Enter`:
 
    ```bash
    BRIEF=$(cat <<EOF
