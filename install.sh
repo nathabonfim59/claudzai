@@ -126,7 +126,28 @@ else
     info "Skipped settings"
 fi
 
-# ── 4. Teammate skill ───────────────────────────────────────────────────
+# ── 4. Link project memories ─────────────────────────────────────────────
+
+CLAUDE_PROJECTS="$HOME/.claude/projects"
+
+echo ""
+if [ -d "$CLAUDE_PROJECTS" ]; then
+    if ask "Link project memories from ${CLAUDE_PROJECTS}? (shared between Claude and claudzai)"; then
+        mkdir -p "$CONFIG_DIR"
+        if [ -d "${CONFIG_DIR}/projects" ] && [ ! -L "${CONFIG_DIR}/projects" ]; then
+            warn "${CONFIG_DIR}/projects already exists and is not a symlink, skipping"
+        else
+            ln -sfn "$CLAUDE_PROJECTS" "${CONFIG_DIR}/projects"
+            ok "Linked ${CONFIG_DIR}/projects -> ${CLAUDE_PROJECTS}"
+        fi
+    else
+        info "Skipped memory linking"
+    fi
+else
+    info "No existing Claude project memories found, skipping"
+fi
+
+# ── 5. Teammate skill ───────────────────────────────────────────────────
 
 echo ""
 if ask "Install the claude-zai-teammate skill?"; then
