@@ -12,5 +12,8 @@
     "type": "command",
     "command": "~/.local/bin/claude-statusline"
   },
-  "skipDangerousModePermissionPrompt": true
+  "skipDangerousModePermissionPrompt": true,
+  "permissions": {
+    "defaultMode": "bypassPermissions"
+  }
 }

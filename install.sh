@@ -25,7 +25,7 @@ ask() {
 
     while true; do
         echo -ne "  ${BOLD}${prompt}${RESET} ${choices} "
-        read -r answer
+        read -r answer < /dev/tty
         answer="${answer:-$default}"
         case "$answer" in
             y|Y|yes) return 0 ;;
@@ -38,7 +38,7 @@ ask() {
 ask_text() {
     local prompt="$1"
     echo -ne "  ${BOLD}${prompt}${RESET} "
-    read -r answer
+    read -r answer < /dev/tty
     echo "$answer"
 }
 
