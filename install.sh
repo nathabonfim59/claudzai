@@ -131,13 +131,13 @@ fi
 echo ""
 if ask "Install the claude-zai-teammate skill?"; then
     if command -v npx &>/dev/null; then
-        info "Running npx skills add — use SPACE to select Claude Code, then install globally."
+        info "Installing skill to Claude Code globally..."
         echo ""
-        npx skills add https://github.com/nathabonfim59/claudzai
-        ok "Skill install complete"
+        npx skills add nathabonfim59/claudzai -a claude-code -g -y
+        ok "Skill installed"
     else
         warn "npx not found. Install Node.js first, then run:"
-        echo "  npx skills add https://github.com/nathabonfim59/claudzai"
+        echo "  npx skills add nathabonfim59/claudzai -a claude-code -g -y"
     fi
 else
     info "Skipped skill install"

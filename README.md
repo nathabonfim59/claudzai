@@ -97,10 +97,8 @@ The [`skills/claude-zai-teammate/`](skills/claude-zai-teammate/) directory conta
 **Option 1: via npx (recommended)**
 
 ```bash
-npx skills add https://github.com/nathabonfim59/claudzai
+npx skills add nathabonfim59/claudzai -a claude-code -g -y
 ```
-
-It will prompt you to select the skill and which agents to install it to.
 
 **Option 2: clone the repo**
 
