@@ -28,7 +28,7 @@ A wrapper script that runs [Claude Code](https://docs.anthropic.com/en/docs/clau
 ## Quick start
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/nathabonfim59/claudzai/main/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/nathabonfim59/claudzai/main/install.sh | bash
 ```
 
 The installer will walk you through:
@@ -71,7 +71,7 @@ The included `settings.json` already configures [cc-statusline](https://github.c
 Just install it:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/nathabonfim59/cc-statusline/main/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/nathabonfim59/cc-statusline/main/install.sh | bash
 ```
 
 See the [cc-statusline repo](https://github.com/nathabonfim59/cc-statusline) for theming, custom layouts, and other options.
