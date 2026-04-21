@@ -25,28 +25,18 @@ A wrapper script that runs [Claude Code](https://docs.anthropic.com/en/docs/clau
 - [Claude Code](https://docs.anthropic.com/en/docs/claude-code) installed (`claude` in `$PATH`)
 - A `ZAI_API_KEY` environment variable set with your Z.AI API key
 
-Set your API key in your shell config so it persists across sessions:
-
-```bash
-echo 'export ZAI_API_KEY="your-api-key-here"' >> ~/.bashrc
-source ~/.bashrc
-```
-
 ## Quick start
 
 ```bash
-# Make the wrapper available (one-time)
-chmod +x claude-zai
-sudo ln -s "$(pwd)/claude-zai" /usr/local/bin/claude-zai
-
-# Copy the recommended settings into your config dir
-mkdir -p ~/.glm
-cp settings.json ~/.glm/settings.json
-
-# Run it like you would run claude
-claude-zai
-claude-zai "explain this codebase"
+curl -fsSL https://raw.githubusercontent.com/nathabonfim59/claudzai/main/install.sh | sh
 ```
+
+The installer will walk you through:
+
+1. Setting your `ZAI_API_KEY` (saved to `~/.bashrc` or `~/.zshrc`)
+2. Downloading `claude-zai` to `~/.local/bin`
+3. Copying the recommended `settings.json` to `~/.glm/`
+4. Installing the teammate skill via `npx`
 
 All Claude Code flags and arguments are passed through to `claude` unchanged.
 
