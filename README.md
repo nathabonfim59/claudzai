@@ -57,16 +57,16 @@ This wrapper sets `CLAUDE_CONFIG_DIR` to `~/.glm`, which means **all** Claude Co
 
 **This is important:** any configuration you'd normally put in `~/.claude` goes in `~/.glm` instead. For example:
 
-- **Settings** — edit `~/.glm/settings.json` (or use `/config` inside the session — it writes to the same place)
-- **Status line** — set the `statusLine` key in `~/.glm/settings.json`
-- **Per-project settings** — go under `~/.glm/projects/`
-- **Memory files** — stored under `~/.glm/projects/<project>/memory/`
+- **Settings** - edit `~/.glm/settings.json` (or use `/config` inside the session - it writes to the same place)
+- **Status line** - set the `statusLine` key in `~/.glm/settings.json`
+- **Per-project settings** - go under `~/.glm/projects/`
+- **Memory files** - stored under `~/.glm/projects/<project>/memory/`
 
-The in-app UI (settings panels, `/config`, etc.) works the same — it just reads and writes to `~/.glm` behind the scenes.
+The in-app UI (settings panels, `/config`, etc.) works the same - it just reads and writes to `~/.glm` behind the scenes.
 
 ## Status line
 
-The included `settings.json` already configures [cc-statusline](https://github.com/nathabonfim59/cc-statusline) — a fast, themeable status line that shows context usage, cost, timing, git state, and diff stats. It also helps when using teammates: a `tmux capture-pane` snapshot reveals the teammate's context fill level and whether it has uncommitted changes.
+The included `settings.json` already configures [cc-statusline](https://github.com/nathabonfim59/cc-statusline) - a fast, themeable status line that shows context usage, cost, timing, git state, and diff stats. It also helps when using teammates: a `tmux capture-pane` snapshot reveals the teammate's context fill level and whether it has uncommitted changes.
 
 Just install it:
 
