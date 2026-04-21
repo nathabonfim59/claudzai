@@ -74,30 +74,6 @@ This wrapper sets `CLAUDE_CONFIG_DIR` to `~/.glm`, which means **all** Claude Co
 
 The in-app UI (settings panels, `/config`, etc.) works the same — it just reads and writes to `~/.glm` behind the scenes.
 
-## Recommended settings
-
-This repo ships a [`settings.json`](settings.json) you can copy to `~/.glm/`:
-
-```bash
-mkdir -p ~/.glm
-cp settings.json ~/.glm/settings.json
-```
-
-It includes:
-
-| Setting | Purpose |
-|---------|---------|
-| `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS` | Enables the teammate/teams feature |
-| `CLAUDE_CODE_NO_FLICKER` | Removes UI flicker in terminals |
-| `model: "opus[1m]"` | Uses Opus (mapped to GLM-5.1) by default |
-| `skipDangerousModePermissionPrompt` | Skips the bypass-permissions confirmation prompt |
-
-> **Warning:** `--dangerously-skip-permissions` disables all safety prompts. This means teammates can run any command without asking for confirmation — including destructive operations like `rm`, `git push --force`, or overwriting files. Only use this if you understand the risks and trust the codebase you're working in.
-
-### Why skip permissions?
-
-When using teammates, each one is a separate `claude-zai` instance. Without `--dangerously-skip-permissions`, teammates get stuck waiting for a human to approve every tool call — which defeats the purpose of parallel autonomous work. The tradeoff is speed and autonomy for reduced safety guardrails.
-
 ## Status line
 
 The included `settings.json` already configures [cc-statusline](https://github.com/nathabonfim59/cc-statusline) — a fast, themeable status line that shows context usage, cost, timing, git state, and diff stats. It also helps when using teammates: a `tmux capture-pane` snapshot reveals the teammate's context fill level and whether it has uncommitted changes.
@@ -128,11 +104,21 @@ The [`skills/claude-zai-teammate/`](skills/claude-zai-teammate/) directory conta
 
 ### Install the skill
 
+**Option 1: via npx (recommended)**
+
 ```bash
-# Copy the skill into your project
-mkdir -p .claude/skills
-cp -r skills/claude-zai-teammate .claude/skills/
+npx skills add https://github.com/nathabonfim59/claudzai
 ```
+
+It will prompt you to select the skill and which agents to install it to.
+
+**Option 2: clone the repo**
+
+```bash
+git clone https://github.com/nathabonfim59/claudzai.git
+```
+
+Then copy `skills/claude-zai-teammate/` into your project's `.claude/skills/`.
 
 Once installed, Claude Code will pick it up automatically and can spawn teammates when asked to delegate work.
 
