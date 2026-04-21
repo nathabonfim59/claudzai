@@ -1,0 +1,17 @@
+#!/bin/bash
+
+# Z.AI Coding bindings
+export ANTHROPIC_API_KEY=$ZAI_API_KEY
+export ANTHROPIC_BASE_URL=https://api.z.ai/api/anthropic
+
+export ANTHROPIC_DEFAULT_OPUS_MODEL="GLM-5.1"
+export ANTHROPIC_DEFAULT_SONNET_MODEL="GLM-5"
+export ANTHROPIC_DEFAULT_HAIKU_MODEL="GLM-5-Turbo"
+
+
+export CLAUDE_CONFIG_DIR="${HOME}/.glm"
+mkdir -p "${CLAUDE_CONFIG_DIR}"
+
+# Run claude
+claude "$@"
+
