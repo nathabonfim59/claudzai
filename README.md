@@ -31,7 +31,7 @@ A wrapper script that runs [Claude Code](https://docs.anthropic.com/en/docs/clau
 curl -fsSL https://raw.githubusercontent.com/nathabonfim59/claudzai/main/install.sh | bash
 ```
 
-Re-running the same command updates an existing installation in place (refreshes the wrapper and skill) without re-prompting for setup. From inside a claudzai session, the `/claude-zai-update` command does the same thing.
+Re-running the same command updates an existing installation in place — it checks the latest release and only refreshes the wrapper and skill when a newer version is available. From inside a claudzai session, the `/claude-zai-update` command does the same thing.
 
 The installer will walk you through:
 
@@ -41,6 +41,34 @@ The installer will walk you through:
 4. Installing the teammate skill via `npx`
 
 All Claude Code flags and arguments are passed through to `claude` unchanged.
+
+## Versioning & updates
+
+claudzai is versioned with `vX.Y.Z` [GitHub releases](https://github.com/nathabonfim59/claudzai/releases). The installed version is printed by:
+
+```bash
+claude-zai --version     # or: claude-zai -V
+```
+
+The updater compares your installed version against the latest release and **only downloads when a newer version exists** — if you're already current it prints `Already up to date` and does nothing. Two flags are available when piping the installer to bash:
+
+```bash
+# Just report installed vs. latest, then exit
+curl -fsSL https://raw.githubusercontent.com/nathabonfim59/claudzai/main/install.sh | bash -s -- --check
+
+# Force a refresh even when already up to date
+curl -fsSL https://raw.githubusercontent.com/nathabonfim59/claudzai/main/install.sh | bash -s -- --force
+```
+
+If the latest version can't be determined (no release found yet, or a network error), the updater falls back to refreshing the files rather than blocking the update.
+
+### Cutting a release (maintainers)
+
+1. Bump `CLAUDE_ZAI_VERSION` in [`claude-zai`](claude-zai) — it's the single source of truth.
+2. Commit and push to `main`.
+3. Tag and push: `git tag vX.Y.Z && git push origin vX.Y.Z`.
+
+A [GitHub Action](.github/workflows/release.yml) then verifies the tag matches the version (failing loudly on mismatch) and publishes the release. Once published, `--check` and every updater run pick up the new version.
 
 ## Configuration directory: `~/.glm`
 

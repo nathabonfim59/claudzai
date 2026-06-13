@@ -1,0 +1,35 @@
+name: Release
+
+# Creates a GitHub Release when a vX.Y.Z tag is pushed. First verifies that
+# the tag matches the CLAUDE_ZAI_VERSION bolted into claude-zai, so the
+# version shown by `claude-zai --version` and the version the installer reads
+# from the GitHub API can never drift apart.
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify tag matches version
+        run: |
+          set -euo pipefail
+          TAG="${GITHUB_REF_NAME#v}"
+          SCRIPT_VER=$(grep -oE 'CLAUDE_ZAI_VERSION="[0-9]+\.[0-9]+\.[0-9]+"' claude-zai | head -1 | cut -d'"' -f2)
+          echo "Tag: $TAG   claude-zai version: ${SCRIPT_VER:-<not found>}"
+          if [ "$TAG" != "$SCRIPT_VER" ]; then
+            echo "::error::Tag 'v$TAG' does not match CLAUDE_ZAI_VERSION '${SCRIPT_VER:-<missing>}' in claude-zai. Bump the variable and re-tag."
+            exit 1
+          fi
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true

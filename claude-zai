@@ -1,5 +1,19 @@
 #!/bin/bash
 
+# claudzai version — single source of truth; keep in sync with git tags
+# (CI verifies the tag matches this on release). Bump here, then tag vX.Y.Z.
+CLAUDE_ZAI_VERSION="1.0.0"
+
+# Handle our own flags before delegating to claude
+for arg in "$@"; do
+    case "$arg" in
+        --version|-V)
+            echo "claude-zai ${CLAUDE_ZAI_VERSION}"
+            exit 0
+            ;;
+    esac
+done
+
 # Z.AI Coding bindings
 export ANTHROPIC_API_KEY=$ZAI_API_KEY
 export ANTHROPIC_BASE_URL=https://api.z.ai/api/anthropic

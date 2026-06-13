@@ -2,6 +2,7 @@
 set -euo pipefail
 
 REPO="https://raw.githubusercontent.com/nathabonfim59/claudzai/main"
+GITHUB_API="https://api.github.com/repos/nathabonfim59/claudzai"
 INSTALL_DIR="${INSTALL_DIR:-$HOME/.local/bin}"
 CONFIG_DIR="${CLAUDE_CONFIG_DIR:-$HOME/.glm}"
 
@@ -16,6 +17,39 @@ info()  { echo -e "${CYAN}  ->${RESET} $*"; }
 ok()    { echo -e "${GREEN}  ✓${RESET} $*"; }
 warn()  { echo -e "${YELLOW}  !${RESET} $*"; }
 die()   { echo -e "${RED}  ✗${RESET} $*"; exit 1; }
+
+# Compare two semver strings (strips a leading "v" and any pre-release
+# suffix). Echoes -1 if $1 < $2, 0 if equal, 1 if $1 > $2.
+semver_cmp() {
+    local IFS=.
+    local -a a b
+    read -ra a <<< "${1#v}"
+    read -ra b <<< "${2#v}"
+    local i x y
+    for i in 0 1 2; do
+        x=${a[i]:-0}; y=${b[i]:-0}
+        x=${x%%[^0-9]*}; y=${y%%[^0-9]*}
+        x=${x:-0}; y=${y:-0}
+        if (( x > y )); then echo 1; return; fi
+        if (( x < y )); then echo -1; return; fi
+    done
+    echo 0
+}
+
+# Echo the latest released version (no leading "v"), or nothing if it can't
+# be determined. Prefers the latest GitHub Release, falls back to tags.
+fetch_latest_version() {
+    local ver
+    ver=$(curl -fsSL "${GITHUB_API}/releases/latest" 2>/dev/null \
+        | grep -oE '"tag_name":[[:space:]]*"v?[0-9]+\.[0-9]+\.[0-9]+"' \
+        | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1 || true)
+    [ -n "$ver" ] && { echo "$ver"; return 0; }
+    ver=$(curl -fsSL "${GITHUB_API}/tags" 2>/dev/null \
+        | grep -oE '"name":[[:space:]]*"v?[0-9]+\.[0-9]+\.[0-9]+"' \
+        | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1 || true)
+    [ -n "$ver" ] && echo "$ver"
+    return 0
+}
 
 ask() {
     local prompt="$1"
@@ -42,6 +76,16 @@ ask_text() {
     echo "$answer"
 }
 
+# ── Flags (passed via `bash -s -- <flag>`; only affect update mode) ────────
+FORCE=0
+CHECK_ONLY=0
+for _arg in "$@"; do
+    case "$_arg" in
+        --force|-f) FORCE=1 ;;
+        --check|-c) CHECK_ONLY=1 ;;
+    esac
+done
+
 # ── Update mode: refresh an existing install without re-prompting ─────────
 # Re-running the installer on an already-installed system pulls the latest
 # claude-zai wrapper and skill while leaving your settings, API key, and
@@ -55,6 +99,53 @@ if [ -f "${INSTALL_DIR}/claude-zai" ]; then
         ok "ZAI_API_KEY is set"
     else
         warn "ZAI_API_KEY is not set (add it to your shell config before running claude-zai)"
+    fi
+
+    # ── Version check ────────────────────────────────────────────────────
+    installed_version=$(grep -oE 'CLAUDE_ZAI_VERSION="[0-9]+\.[0-9]+\.[0-9]+"' "${INSTALL_DIR}/claude-zai" 2>/dev/null \
+        | head -1 | cut -d'"' -f2 || true)
+
+    if [ "${CHECK_ONLY}" -eq 1 ]; then
+        latest_version=$(fetch_latest_version)
+        echo ""
+        echo "  Installed: ${installed_version:-unknown}"
+        echo "  Latest:    ${latest_version:-unknown}"
+        if [ -n "$installed_version" ] && [ -n "$latest_version" ]; then
+            case "$(semver_cmp "$latest_version" "$installed_version")" in
+                1)  echo "  Status:    update available (v${installed_version} -> v${latest_version})" ;;
+                0)  echo "  Status:    up to date" ;;
+                -1) echo "  Status:    installed is newer than the latest release" ;;
+            esac
+        fi
+        exit 0
+    fi
+
+    if [ "${FORCE}" -ne 1 ]; then
+        latest_version=$(fetch_latest_version)
+        if [ -z "$latest_version" ]; then
+            echo ""
+            warn "Could not determine the latest version (no release found or network error)"
+            info "Proceeding with the update — use --check to inspect versions"
+        elif [ -z "$installed_version" ]; then
+            echo ""
+            info "Installed version unknown (pre-versioned install) — updating to v${latest_version}"
+        else
+            case "$(semver_cmp "$latest_version" "$installed_version")" in
+                0)
+                    ok "Already up to date (v${installed_version})"
+                    echo "  Run with --force to refresh the files anyway."
+                    exit 0
+                    ;;
+                -1)
+                    warn "Installed version (v${installed_version}) is newer than the latest release (v${latest_version})"
+                    echo "  Run with --force to refresh the files anyway."
+                    exit 0
+                    ;;
+                1)
+                    info "Update available: v${installed_version} -> v${latest_version}"
+                    ;;
+            esac
+        fi
     fi
 
     # Refresh the wrapper (this is where model mappings and backend config live)
