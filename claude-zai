@@ -4,10 +4,12 @@
 export ANTHROPIC_API_KEY=$ZAI_API_KEY
 export ANTHROPIC_BASE_URL=https://api.z.ai/api/anthropic
 
-export ANTHROPIC_DEFAULT_OPUS_MODEL="GLM-5.1"
-export ANTHROPIC_DEFAULT_SONNET_MODEL="GLM-5"
-export ANTHROPIC_DEFAULT_HAIKU_MODEL="GLM-5-Turbo"
+export ANTHROPIC_DEFAULT_OPUS_MODEL="glm-5.2[1m]"
+export ANTHROPIC_DEFAULT_SONNET_MODEL="glm-5.2[1m]"
+export ANTHROPIC_DEFAULT_HAIKU_MODEL="glm-4.5-air"
 
+# Required alongside the [1m] model suffix to enable the GLM 1M context window
+export CLAUDE_CODE_AUTO_COMPACT_WINDOW="1000000"
 
 export CLAUDE_CONFIG_DIR="${HOME}/.glm"
 mkdir -p "${CLAUDE_CONFIG_DIR}"

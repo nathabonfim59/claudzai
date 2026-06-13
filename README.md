@@ -16,9 +16,9 @@ A wrapper script that runs [Claude Code](https://docs.anthropic.com/en/docs/clau
 
 | Claude tier    | Z.AI model    |
 |----------------|---------------|
-| Opus           | GLM-5.1       |
-| Sonnet         | GLM-5         |
-| Haiku          | GLM-5-Turbo   |
+| Opus           | GLM-5.2 (1M)  |
+| Sonnet         | GLM-5.2 (1M)  |
+| Haiku          | GLM-4.5-Air   |
 
 ## Requirements
 
