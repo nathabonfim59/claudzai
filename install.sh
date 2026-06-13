@@ -42,11 +42,87 @@ ask_text() {
     echo "$answer"
 }
 
-# ── 1. API key ──────────────────────────────────────────────────────────
+# ── Update mode: refresh an existing install without re-prompting ─────────
+# Re-running the installer on an already-installed system pulls the latest
+# claude-zai wrapper and skill while leaving your settings, API key, and
+# memory links untouched. Fully non-interactive.
+if [ -f "${INSTALL_DIR}/claude-zai" ]; then
+    echo ""
+    echo -e "${BOLD}  claudzai updater${RESET} (existing install detected)"
+    echo ""
+
+    if [ -n "${ZAI_API_KEY:-}" ]; then
+        ok "ZAI_API_KEY is set"
+    else
+        warn "ZAI_API_KEY is not set (add it to your shell config before running claude-zai)"
+    fi
+
+    # Refresh the wrapper (this is where model mappings and backend config live)
+    echo ""
+    info "Updating claude-zai to the latest version..."
+    mkdir -p "$INSTALL_DIR"
+    tmp=$(mktemp)
+    curl -fsSL "${REPO}/claude-zai" -o "$tmp" || die "Failed to download claude-zai"
+    chmod +x "$tmp"
+    mv "$tmp" "${INSTALL_DIR}/claude-zai"
+    ok "Updated ${INSTALL_DIR}/claude-zai"
+
+    # Ensure install dir is in PATH
+    case ":${PATH}:" in
+        *":${INSTALL_DIR}:"*) ;;
+        *)
+            warn "${INSTALL_DIR} is not in your PATH"
+            if [ -f "$HOME/.zshrc" ]; then
+                rc_file="$HOME/.zshrc"
+            else
+                rc_file="$HOME/.bashrc"
+            fi
+            echo "" >> "$rc_file"
+            echo "# Added by claudzai installer" >> "$rc_file"
+            echo "export PATH=\"\${PATH}:${INSTALL_DIR}\"" >> "$rc_file"
+            ok "Added ${INSTALL_DIR} to PATH in ${rc_file}"
+            export PATH="${PATH}:${INSTALL_DIR}"
+            ;;
+    esac
+
+    # Preserve user-customized settings; only seed if missing
+    echo ""
+    if [ -f "${CONFIG_DIR}/settings.json" ]; then
+        info "Kept existing ${CONFIG_DIR}/settings.json (untouched)"
+    else
+        mkdir -p "$CONFIG_DIR"
+        tmp=$(mktemp)
+        curl -fsSL "${REPO}/settings.json" -o "$tmp" || die "Failed to download settings.json"
+        mv "$tmp" "${CONFIG_DIR}/settings.json"
+        ok "Saved settings to ${CONFIG_DIR}/settings.json"
+    fi
+
+    # Refresh the teammate skill (idempotent: installs or updates to latest)
+    echo ""
+    if command -v npx &>/dev/null; then
+        info "Updating claude-zai-teammate skill..."
+        if npx skills add nathabonfim59/claudzai -a claude-code -g -y; then
+            ok "Skill updated"
+        else
+            warn "Skill update failed (continuing)"
+        fi
+    else
+        info "npx not found, skipping skill update"
+    fi
+
+    echo ""
+    ok "claudzai updated to the latest version!"
+    echo ""
+    exit 0
+fi
+
+# ── Fresh install (interactive) ──────────────────────────────────────────
 
 echo ""
 echo -e "${BOLD}  claudzai installer${RESET}"
 echo ""
+
+# ── 1. API key ──────────────────────────────────────────────────────────
 
 if [ -n "${ZAI_API_KEY:-}" ]; then
     ok "ZAI_API_KEY is already set"

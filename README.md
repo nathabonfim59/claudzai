@@ -31,6 +31,8 @@ A wrapper script that runs [Claude Code](https://docs.anthropic.com/en/docs/clau
 curl -fsSL https://raw.githubusercontent.com/nathabonfim59/claudzai/main/install.sh | bash
 ```
 
+Re-running the same command updates an existing installation in place (refreshes the wrapper and skill) without re-prompting for setup.
+
 The installer will walk you through:
 
 1. Setting your `ZAI_API_KEY` (saved to `~/.bashrc` or `~/.zshrc`)
