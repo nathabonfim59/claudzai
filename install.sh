@@ -110,6 +110,17 @@ if [ -f "${INSTALL_DIR}/claude-zai" ]; then
         info "npx not found, skipping skill update"
     fi
 
+    # Refresh the /claude-zai-update slash command
+    mkdir -p "${CONFIG_DIR}/commands"
+    tmp=$(mktemp)
+    if curl -fsSL "${REPO}/commands/claude-zai-update.md" -o "$tmp"; then
+        mv "$tmp" "${CONFIG_DIR}/commands/claude-zai-update.md"
+        ok "Updated /claude-zai-update command"
+    else
+        rm -f "$tmp"
+        warn "Could not refresh /claude-zai-update command (skipped)"
+    fi
+
     echo ""
     ok "claudzai updated to the latest version!"
     echo ""
@@ -238,6 +249,19 @@ if ask "Install the claude-zai-teammate skill?"; then
     fi
 else
     info "Skipped skill install"
+fi
+
+# ── 6. claude-zai-update command ────────────────────────────────────────
+
+echo ""
+mkdir -p "${CONFIG_DIR}/commands"
+tmp=$(mktemp)
+if curl -fsSL "${REPO}/commands/claude-zai-update.md" -o "$tmp"; then
+    mv "$tmp" "${CONFIG_DIR}/commands/claude-zai-update.md"
+    ok "Installed /claude-zai-update command"
+else
+    rm -f "$tmp"
+    warn "Could not install /claude-zai-update command (skipped)"
 fi
 
 # ── Done ─────────────────────────────────────────────────────────────────
