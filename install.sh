@@ -192,7 +192,10 @@ if [ -f "${INSTALL_DIR}/claude-zai" ]; then
     echo ""
     if command -v npx &>/dev/null; then
         info "Updating claude-zai-teammate skill..."
-        if npx skills add nathabonfim59/claudzai -a claude-code -g -y; then
+        # < /dev/tty: under `curl | bash`, stdin IS the script stream. Without
+        # this redirect npx drains the remaining script bytes as its stdin, so
+        # the command refresh and "done" banner below never execute.
+        if npx skills add nathabonfim59/claudzai -a claude-code -g -y < /dev/tty; then
             ok "Skill updated"
         else
             warn "Skill update failed (continuing)"
@@ -332,7 +335,10 @@ if ask "Install the claude-zai-teammate skill?"; then
     if command -v npx &>/dev/null; then
         info "Installing skill to Claude Code globally..."
         echo ""
-        npx skills add nathabonfim59/claudzai -a claude-code -g -y
+        # < /dev/tty: under `curl | bash`, stdin IS the script stream. Without
+        # this redirect npx drains the remaining script bytes as its stdin, so
+        # the /claude-zai-update command below never gets installed.
+        npx skills add nathabonfim59/claudzai -a claude-code -g -y < /dev/tty
         ok "Skill installed"
     else
         warn "npx not found. Install Node.js first, then run:"
@@ -359,5 +365,5 @@ fi
 
 echo ""
 ok "All done! Run ${BOLD}claude-zai${RESET} to get started."
-echo "  Restart your shell or run ${BOLD}source ~/.bashrc${RESET} (or ~/.zshrc) to pick up changes."
+echo -e "  Restart your shell or run ${BOLD}source ~/.bashrc${RESET} (or ~/.zshrc) to pick up changes."
 echo ""
