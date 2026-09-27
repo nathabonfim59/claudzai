@@ -23,17 +23,17 @@ All tiers run on the GLM-5.3 family with a 1M-token context window, each with it
 | Haiku       | GLM-5.3-Flash (1M) | `low`        | low                |
 | Fable       | GLM-5.3 (1M)     | `xhigh`        | max                |
 
-GLM-5.2 (1M) remains available as the older model: it shows up in the `/model` picker as **GLM-5.2** for when you want the previous generation.
+GLM-5.2 (1M) is still available as the older model. It appears in the `/model` picker as GLM-5.2.
 
 ### How effort control works
 
-- GLM-5.3 supports three thinking levels — low, high, max — and Z.AI maps Claude Code's effort parameter onto them: `low` → low, `medium`/`high` → high, `xhigh`/`max` → max. The wrapper sets `CLAUDE_CODE_ALWAYS_ENABLE_EFFORT=1` so effort is sent even though GLM model IDs are unknown to Claude Code, and the per-tier defaults live in `modelSettings` in `settings.json`.
-- Fable needs its own effort level (`xhigh` → max) while running the same underlying model as Opus/Sonnet. That works because Claude Code strips the `[1m]` suffix before sending — it's a client-side context-window hint — so `glm-5.3` and `glm-5.3[1m]` reach Z.AI as the same model but stay distinct `modelSettings` keys. `CLAUDE_CODE_MAX_CONTEXT_TOKENS=1000000` keeps the bare-ID tier on the 1M window.
+- GLM-5.3 supports three thinking levels: low, high, and max. Z.AI converts Claude Code's effort values to them: `low` becomes low, `medium` and `high` become high, `xhigh` and `max` become max. The wrapper sets `CLAUDE_CODE_ALWAYS_ENABLE_EFFORT=1` because Claude Code doesn't recognize GLM model IDs as effort-capable and would skip the parameter without it. Per-tier defaults are set in `modelSettings` in `settings.json`.
+- Fable runs the same model as Opus and Sonnet but needs its own effort level, so it sends `xhigh` (Z.AI converts it to max). Claude Code strips the `[1m]` suffix before sending, because it is only a client-side context-window hint. `glm-5.3` and `glm-5.3[1m]` therefore reach Z.AI as the same model but stay distinct `modelSettings` keys. `CLAUDE_CODE_MAX_CONTEXT_TOKENS=1000000` keeps the bare-ID tier on the 1M window.
 - `/effort` still works in-session and overrides the tier default for the current model; confirming with <kbd>Enter</kbd> saves your choice back into `modelSettings`.
 
 ### Auto mode classifier checks
 
-Auto mode's [no-charge server-side classifier checks](https://code.claude.com/docs/en/auto-mode-classifier-billing) are an Anthropic-server feature and **can't work through Z.AI's gateway** — you'd see the "this session isn't eligible for auto mode's no-charge classifier requests" notice. claudzai sets `CLAUDE_CODE_AUTO_MODE_SERVER=0` so Claude Code doesn't ask for them: the notice goes away and auto mode keeps working, with classifier checks running as regular model requests **billed to your Z.AI usage — never an Anthropic subscription** (every request, classifier included, routes through the Z.AI key).
+Auto mode's [no-charge classifier checks](https://code.claude.com/docs/en/auto-mode-classifier-billing) run on Anthropic's servers, so they can't work through Z.AI's gateway. claudzai sets `CLAUDE_CODE_AUTO_MODE_SERVER=0` to stop Claude Code from asking for them, which also suppresses the "this session isn't eligible" notice. Auto mode keeps working. Classifier checks run as regular model requests billed to your Z.AI usage, never to an Anthropic subscription, because every request, classifier checks included, routes through the Z.AI key.
 
 ## Requirements
 
@@ -46,7 +46,7 @@ Auto mode's [no-charge server-side classifier checks](https://code.claude.com/do
 curl -fsSL https://raw.githubusercontent.com/nathabonfim59/claudzai/main/install.sh | bash
 ```
 
-Re-running the same command updates an existing installation in place — it checks the latest release and only refreshes the wrapper and skill when a newer version is available. From inside a claudzai session, the `/claude-zai-update` command does the same thing.
+Re-running the same command updates an existing installation in place. It checks the latest release and only refreshes the wrapper and skill when a newer version is available. From inside a claudzai session, the `/claude-zai-update` command does the same thing.
 
 The installer will walk you through:
 
@@ -65,7 +65,7 @@ claudzai is versioned with `vX.Y.Z` [GitHub releases](https://github.com/nathabo
 claude-zai --version     # or: claude-zai -V
 ```
 
-The updater compares your installed version against the latest release and **only downloads when a newer version exists** — if you're already current it prints `Already up to date` and does nothing. Two flags are available when piping the installer to bash:
+The updater compares your installed version against the latest release and only downloads when a newer version exists. If you're already current it prints `Already up to date` and does nothing. Two flags are available when piping the installer to bash:
 
 ```bash
 # Just report installed vs. latest, then exit
@@ -79,15 +79,15 @@ If the latest version can't be determined (no release found yet, or a network er
 
 ### Cutting a release (maintainers)
 
-1. Bump `CLAUDE_ZAI_VERSION` in [`claude-zai`](claude-zai) — it's the single source of truth.
+1. Bump `CLAUDE_ZAI_VERSION` in [`claude-zai`](claude-zai). It's the single source of truth.
 2. Commit and push to `main`.
 3. Tag and push: `git tag vX.Y.Z && git push origin vX.Y.Z`.
 
-A [GitHub Action](.github/workflows/release.yml) then verifies the tag matches the version (failing loudly on mismatch) and publishes the release. Once published, `--check` and every updater run pick up the new version.
+A [GitHub Action](.github/workflows/release.yml) then verifies the tag matches the version, fails the run on mismatch, and publishes the release. Once published, `--check` and every updater run pick up the new version.
 
 ## Configuration directory: `~/.glm`
 
-This wrapper sets `CLAUDE_CONFIG_DIR` to `~/.glm`, which means **all** Claude Code state lives there instead of the default `~/.claude`:
+This wrapper sets `CLAUDE_CONFIG_DIR` to `~/.glm`, so all Claude Code state lives there instead of the default `~/.claude`:
 
 ```
 ~/.glm/
@@ -100,18 +100,18 @@ This wrapper sets `CLAUDE_CONFIG_DIR` to `~/.glm`, which means **all** Claude Co
 └── ...
 ```
 
-**This is important:** any configuration you'd normally put in `~/.claude` goes in `~/.glm` instead. For example:
+Any configuration you'd normally put in `~/.claude` goes in `~/.glm` instead. For example:
 
 - **Settings** - edit `~/.glm/settings.json` (or use `/config` inside the session - it writes to the same place)
 - **Status line** - set the `statusLine` key in `~/.glm/settings.json`
 - **Per-project settings** - go under `~/.glm/projects/`
 - **Memory files** - stored under `~/.glm/projects/<project>/memory/`
 
-The in-app UI (settings panels, `/config`, etc.) works the same - it just reads and writes to `~/.glm` behind the scenes.
+The in-app UI (settings panels, `/config`, etc.) works the same - it reads and writes to `~/.glm` instead.
 
 ## Status line
 
-The included `settings.json` already configures [cc-statusline](https://github.com/nathabonfim59/cc-statusline) - a fast, themeable status line that shows context usage, cost, timing, git state, and diff stats. It also helps when using teammates: a `tmux capture-pane` snapshot reveals the teammate's context fill level and whether it has uncommitted changes.
+The included `settings.json` already configures [cc-statusline](https://github.com/nathabonfim59/cc-statusline) - a fast, themeable status line that shows context usage, cost, timing, git state, and diff stats. It also helps when using teammates. A `tmux capture-pane` snapshot shows how full the teammate's context is and whether it has uncommitted changes.
 
 Just install it:
 
@@ -123,7 +123,7 @@ See the [cc-statusline repo](https://github.com/nathabonfim59/cc-statusline) for
 
 ## Teammate skill
 
-The [`skills/claude-zai-teammate/`](skills/claude-zai-teammate/) directory contains a Claude Code skill that spawns `claude-zai` instances as interactive teammates in tmux. This recreates the built-in teammate feature but using Z.AI's API instead, so you get the same multi-agent workflow at lower cost.
+The [`skills/claude-zai-teammate/`](skills/claude-zai-teammate/) directory contains a Claude Code skill that spawns `claude-zai` instances as interactive teammates in tmux. It recreates the built-in teammate feature on Z.AI's API, so you get the same multi-agent workflow at lower cost.
 
 ### How it works
 
@@ -159,7 +159,7 @@ Once installed, Claude Code will pick it up automatically and can spawn teammate
 
 Keeping `~/.glm` separate from `~/.claude` means your real Claude Code setup and your Z.AI setup don't interfere with each other. You can run either one independently with its own history, sessions, and settings.
 
-This also means **memories are not shared** between the two. Anything you saved via `/remember` or the memory system in your regular Claude Code setup won't be visible inside `claude-zai`, and vice versa.
+This also means memories are not shared between the two. Anything you saved via `/remember` or the memory system in your regular Claude Code setup won't be visible inside `claude-zai`, and vice versa.
 
 If you want to share memories (or other state) between the two, you can symlink specific folders. For example, to share project memories:
 
