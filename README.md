@@ -1,6 +1,6 @@
 # claudzai
 
-A wrapper script that runs [Claude Code](https://docs.anthropic.com/en/docs/claude-code) with [Z.AI](https://z.ai) as the backend provider, mapping Z.AI's GLM models to Claude's Opus/Sonnet/Haiku tiers.
+A wrapper script that runs [Claude Code](https://docs.anthropic.com/en/docs/claude-code) with [Z.AI](https://z.ai) as the backend provider, mapping Z.AI's GLM models to Claude's Opus/Sonnet/Haiku/Fable tiers.
 
 **Why?** Z.AI offers the same Claude Code experience at lower cost and with higher rate limits. This wrapper lets you use it as a drop-in replacement, including spawning teammates for parallel work.
 
@@ -14,11 +14,26 @@ A wrapper script that runs [Claude Code](https://docs.anthropic.com/en/docs/clau
 
 ## Model mapping
 
-| Claude tier    | Z.AI model    |
-|----------------|---------------|
-| Opus           | GLM-5.2 (1M)  |
-| Sonnet         | GLM-5.2 (1M)  |
-| Haiku          | GLM-4.5-Air   |
+All tiers run on the GLM-5.3 family with a 1M-token context window, each with its own default thinking effort:
+
+| Claude tier | Z.AI model       | Default effort | GLM thinking level |
+|-------------|------------------|----------------|--------------------|
+| Opus        | GLM-5.3 (1M)     | `high`         | high               |
+| Sonnet      | GLM-5.3 (1M)     | `high`         | high               |
+| Haiku       | GLM-5.3-Flash (1M) | `low`        | low                |
+| Fable       | GLM-5.3 (1M)     | `xhigh`        | max                |
+
+GLM-5.2 (1M) remains available as the older model: it shows up in the `/model` picker as **GLM-5.2** for when you want the previous generation.
+
+### How effort control works
+
+- GLM-5.3 supports three thinking levels — low, high, max — and Z.AI maps Claude Code's effort parameter onto them: `low` → low, `medium`/`high` → high, `xhigh`/`max` → max. The wrapper sets `CLAUDE_CODE_ALWAYS_ENABLE_EFFORT=1` so effort is sent even though GLM model IDs are unknown to Claude Code, and the per-tier defaults live in `modelSettings` in `settings.json`.
+- Fable needs its own effort level (`xhigh` → max) while running the same underlying model as Opus/Sonnet. That works because Claude Code strips the `[1m]` suffix before sending — it's a client-side context-window hint — so `glm-5.3` and `glm-5.3[1m]` reach Z.AI as the same model but stay distinct `modelSettings` keys. `CLAUDE_CODE_MAX_CONTEXT_TOKENS=1000000` keeps the bare-ID tier on the 1M window.
+- `/effort` still works in-session and overrides the tier default for the current model; confirming with <kbd>Enter</kbd> saves your choice back into `modelSettings`.
+
+### Auto mode classifier checks
+
+Auto mode's [no-charge server-side classifier checks](https://code.claude.com/docs/en/auto-mode-classifier-billing) are an Anthropic-server feature and **can't work through Z.AI's gateway** — you'd see the "this session isn't eligible for auto mode's no-charge classifier requests" notice. claudzai sets `CLAUDE_CODE_AUTO_MODE_SERVER=0` so Claude Code doesn't ask for them: the notice goes away and auto mode keeps working, with classifier checks running as regular model requests **billed to your Z.AI usage — never an Anthropic subscription** (every request, classifier included, routes through the Z.AI key).
 
 ## Requirements
 

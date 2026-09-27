@@ -2,7 +2,7 @@
 
 # claudzai version — single source of truth; keep in sync with git tags
 # (CI verifies the tag matches this on release). Bump here, then tag vX.Y.Z.
-CLAUDE_ZAI_VERSION="1.0.0"
+CLAUDE_ZAI_VERSION="1.1.0"
 
 # Handle our own flags before delegating to claude
 for arg in "$@"; do
@@ -18,11 +18,38 @@ done
 export ANTHROPIC_API_KEY=$ZAI_API_KEY
 export ANTHROPIC_BASE_URL=https://api.z.ai/api/anthropic
 
-export ANTHROPIC_DEFAULT_OPUS_MODEL="glm-5.2[1m]"
-export ANTHROPIC_DEFAULT_SONNET_MODEL="glm-5.2[1m]"
-export ANTHROPIC_DEFAULT_HAIKU_MODEL="glm-4.5-air"
+# Tier mapping — everything runs on the GLM-5.3 family with 1M context.
+#
+# Claude Code strips the "[1m]" suffix before sending (it's a client-side
+# context-window hint), so "glm-5.3" and "glm-5.3[1m]" reach Z.AI as the same
+# model but stay distinct modelSettings keys in settings.json — that's how
+# fable carries its own effort level. Fable uses the bare ID, and
+# CLAUDE_CODE_MAX_CONTEXT_TOKENS below restores its 1M window.
+export ANTHROPIC_DEFAULT_OPUS_MODEL="glm-5.3[1m]"
+export ANTHROPIC_DEFAULT_SONNET_MODEL="glm-5.3[1m]"
+export ANTHROPIC_DEFAULT_HAIKU_MODEL="glm-5.3-flash[1m]"
+export ANTHROPIC_DEFAULT_FABLE_MODEL="glm-5.3"
 
-# Required alongside the [1m] model suffix to enable the GLM 1M context window
+# GLM-5.2 (1M) stays selectable as the older model in the /model picker
+export ANTHROPIC_CUSTOM_MODEL_OPTION="glm-5.2[1m]"
+export ANTHROPIC_CUSTOM_MODEL_OPTION_NAME="GLM-5.2"
+export ANTHROPIC_CUSTOM_MODEL_OPTION_DESCRIPTION="Previous-generation GLM (legacy)"
+export ANTHROPIC_CUSTOM_MODEL_OPTION_SUPPORTED_CAPABILITIES="effort"
+
+# GLM IDs are unknown to Claude Code, so effort must be forced on for the
+# per-tier levels in settings.json (modelSettings) to be sent at all.
+# Z.AI maps them: low -> low, medium/high -> high, xhigh/max -> max.
+export CLAUDE_CODE_ALWAYS_ENABLE_EFFORT=1
+
+# Auto mode's no-charge server-side classifier checks are an Anthropic-server
+# feature and can't work behind Z.AI's gateway (the "this session isn't
+# eligible" notice). This stops Claude Code from asking for them; classifier
+# checks still run as regular model requests billed to Z.AI — never an
+# Anthropic subscription.
+export CLAUDE_CODE_AUTO_MODE_SERVER=0
+
+# 1M context across every tier (also covers fable's bare model ID)
+export CLAUDE_CODE_MAX_CONTEXT_TOKENS="1000000"
 export CLAUDE_CODE_AUTO_COMPACT_WINDOW="1000000"
 
 export CLAUDE_CONFIG_DIR="${HOME}/.glm"

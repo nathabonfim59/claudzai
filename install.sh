@@ -176,10 +176,49 @@ if [ -f "${INSTALL_DIR}/claude-zai" ]; then
             ;;
     esac
 
-    # Preserve user-customized settings; only seed if missing
+    # Preserve user-customized settings; only seed if missing. When the file
+    # already exists but predates modelSettings (per-tier effort levels),
+    # merge just that key in so existing installs pick up the new defaults.
     echo ""
     if [ -f "${CONFIG_DIR}/settings.json" ]; then
-        info "Kept existing ${CONFIG_DIR}/settings.json (untouched)"
+        if grep -q '"modelSettings"' "${CONFIG_DIR}/settings.json" 2>/dev/null; then
+            info "Kept existing ${CONFIG_DIR}/settings.json (untouched)"
+        else
+            fresh=$(mktemp)
+            merged=$(mktemp)
+            if ! curl -fsSL "${REPO}/settings.json" -o "$fresh"; then
+                warn "Could not download settings.json — left ${CONFIG_DIR}/settings.json untouched"
+                rm -f "$fresh" "$merged"
+            elif command -v jq &>/dev/null; then
+                if jq --slurpfile new "$fresh" '.modelSettings = $new[0].modelSettings' \
+                        "${CONFIG_DIR}/settings.json" > "$merged"; then
+                    mv "$merged" "${CONFIG_DIR}/settings.json"
+                    ok "Added per-tier effort levels (modelSettings) to ${CONFIG_DIR}/settings.json"
+                fi
+                rm -f "$fresh" "$merged"
+            elif command -v python3 &>/dev/null; then
+                if python3 - "${CONFIG_DIR}/settings.json" "$fresh" "$merged" <<'PY'
+import json, sys
+with open(sys.argv[2]) as f:
+    new = json.load(f)
+with open(sys.argv[1]) as f:
+    settings = json.load(f)
+settings["modelSettings"] = new["modelSettings"]
+with open(sys.argv[3], "w") as f:
+    json.dump(settings, f, indent=2)
+    f.write("\n")
+PY
+                then
+                    mv "$merged" "${CONFIG_DIR}/settings.json"
+                    ok "Added per-tier effort levels (modelSettings) to ${CONFIG_DIR}/settings.json"
+                fi
+                rm -f "$fresh" "$merged"
+            else
+                warn "Found no jq or python3 — add this to ${CONFIG_DIR}/settings.json for per-tier effort levels:"
+                sed -n '/"modelSettings"/,/^  },/p' "$fresh"
+                rm -f "$fresh" "$merged"
+            fi
+        fi
     else
         mkdir -p "$CONFIG_DIR"
         tmp=$(mktemp)
